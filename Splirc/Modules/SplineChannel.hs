@@ -11,4 +11,4 @@ connectHandler _ = do
     putStrLn "connectHandler called"
     return [SendCommand $ Join channelname]
 sayHelloToSpline (IsJoin _) = return
-    [SendMessage channelname "hello world\\wspline!"]
+    [SendMessage channelname "hello world^Wspline!"]

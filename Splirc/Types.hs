@@ -31,3 +31,8 @@ data IRCCommand = RawCommand String -- an IRC command sent to the server
                 | Join Channel
 
 type Connection = GHC.IO.Handle.Types.Handle
+
+data State = State {
+    st_conn :: Connection,
+    st_handlers :: [EventHandler]
+}

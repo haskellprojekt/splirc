@@ -25,14 +25,12 @@ main = do
     host:nick:args <- getArgs
     h <- connectTo host port
     hSetBuffering h NoBuffering
-    hPutStrLn h $ "user " ++ nick ++ " _ _ :Splirc Haskell Bot"
+    hPutStrLn h $ "user splirc _ _ :Splirc Haskell Bot"
     hPutStrLn h $ "nick " ++ nick
 
---    -- save typing
---    event <- return $ event_ h handlers
+    let st = State { st_conn=h, st_handlers=handlers }
 
---    event IsConnect
-    event_ h handlers IsConnect
+    event st IsConnect
     
     -- just print everything for now
     t <- hGetContents h
@@ -52,14 +50,17 @@ runSetup = (liftM concat . sequence) setups
 -- It is convenient to do `event = event_ h handlers` and then just `event e`
 -- - handlers is the list of registered event handlers
 -- - e is the event that happened
-event_ :: Connection -> [EventHandler] -> Event -> IO ()
+event :: State -> Event -> IO ()
 --event handlers e = concat $ map (applyEvent e) handlers
-event_ h handlers e = handleReactions h reactions
-    where reactions = (liftM concat . sequence) $ map (applyEvent e) handlers
+event st e = handleReactions st reactions
+    where
+        reactions = (liftM concat . sequence) $ map (applyEvent e) handlers
+        handlers = st_handlers st
+
 -- that liftM thing is again just the "IO version" of concat
 
 
--- Called by event_. Only if the EventHandler matches the Event, the
+-- Called by event. Only if the EventHandler matches the Event, the
 -- EventHandler is called.
 -- a little ugly, too, maybe this can be done better, with some monad foo or so
 applyEvent :: Event -> EventHandler -> IO [Reaction]
@@ -77,24 +78,32 @@ onlyIfMatch a b result = if a == b then result else return []
 
 -- REACTION HANDLING STUFF
 
-handleReactions :: Connection -> IO [Reaction] -> IO ()
-handleReactions h reactions = do
+handleReactions :: State -> IO [Reaction] -> IO ()
+handleReactions st reactions = do
     rs <- reactions
-    handleReactions' h rs
+    handleReactions' st rs
 
-handleReactions' :: Connection -> [Reaction] -> IO ()
-handleReactions' h [r] = handleReaction h r
-handleReactions' h (r:rs) = do
-    handleReaction h r
-    handleReactions' h rs
+handleReactions' :: State -> [Reaction] -> IO ()
+handleReactions' st [r] = handleReaction st r
+handleReactions' st (r:rs) = do
+    handleReaction st r
+    handleReactions' st rs
 
 -- TODO: we need checks here of course, eg to check if stuff contains spaces or newlines
-handleReaction :: Connection -> Reaction -> IO ()
-handleReaction h (SendMessage ch msg) = hPutStrLn h $ "PRIVMSG " ++ ch ++ " :" ++ msg
-handleReaction h (SendCommand cmd) = handleCommand h cmd -- just to save typing
-handleReaction h (Debug msg) = hPutStrLn stderr msg
+handleReaction :: State -> Reaction -> IO ()
+handleReaction st (SendMessage ch msg) = connWrite st $ "PRIVMSG " ++ ch ++ " :" ++ msg
+handleReaction st (SendCommand cmd) = handleCommand st cmd -- just to save typing
+handleReaction st (Debug msg) = hPutStrLn stderr msg
 
-handleCommand :: Connection -> IRCCommand -> IO ()
-handleCommand h (Pong arg) = hPutStrLn h $ "PONG :" ++ arg
-handleCommand h (Join ch) = hPutStrLn h $ "JOIN :" ++ ch
-handleCommand h (RawCommand cmd) = hPutStrLn h cmd
+handleCommand :: State -> IRCCommand -> IO ()
+handleCommand st (Pong arg) = connWrite st $ "PONG :" ++ arg
+handleCommand st (Join ch) = do
+    connWrite st $ "JOIN :" ++ ch
+    event st (IsJoin ch) -- just to make it work ;) in real we should wait
+                         -- for the server to tell us we have joined
+handleCommand st (RawCommand cmd) = connWrite st cmd
+
+-- helper
+connWrite :: State -> String -> IO ()
+connWrite st msg = hPutStrLn h msg
+    where h = st_conn st
