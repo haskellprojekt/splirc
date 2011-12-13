@@ -11,8 +11,10 @@ data EventHandler = OnMessage Channel EventHandlerFunction
                   | OnPrivMessage EventHandlerFunction
                   | OnEveryResponse EventHandlerFunction
                   | OnConnect EventHandlerFunction
-                  | OnEveryJoin EventHandlerFunction
-                  | OnJoin Channel EventHandlerFunction
+                  | OnEverySelfJoin EventHandlerFunction -- we joined
+                  | OnSelfJoin Channel EventHandlerFunction -- "
+                  | OnJoin Channel EventHandlerFunction -- a user joined
+                  | OnEveryJoin Channel EventHandlerFunction -- "
                   | OnCommand CommandName EventHandlerFunction
 type EventHandlerFunction = Event -> IO [Reaction] -- just a shortcut
 
@@ -23,6 +25,7 @@ data Event = IsMessage Channel User Message
            | IsResponse String
            | IsConnect
            | IsJoin Channel
+           | IsSelfJoin Channel
            | IsCommand CommandName [String]
 
 type Channel = String

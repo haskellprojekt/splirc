@@ -67,12 +67,12 @@ applyEvent :: Event -> EventHandler -> IO [Reaction]
 applyEvent e@(IsMessage ch1 _ _) (OnMessage ch2 f) = onlyIfMatch ch1 ch2 (f e)
 applyEvent e@(IsMessage _ _ _) (OnEveryMessage f) = f e
 applyEvent e@(IsConnect) (OnConnect f) = do f e
-applyEvent e@(IsJoin _) (OnEveryJoin f) = f e
-applyEvent e@(IsJoin ch1) (OnJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
+applyEvent e@(IsJoin _) (OnEverySelfJoin f) = f e
+applyEvent e@(IsJoin ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
 -- ...
 applyEvent _ _ = return [] -- Fallback: event does not match this EventHandler
 
--- helper for stuff like OnMessage and OnJoin
+-- helper for stuff like OnMessage and OnSelfJoin
 onlyIfMatch a b result = if a == b then result else return []
 
 
