@@ -84,7 +84,7 @@ handleReactions st reactions = do
     handleReactions' st rs
 
 handleReactions' :: State -> [Reaction] -> IO ()
-handleReactions' st [r] = handleReaction st r
+handleReactions' st [] = return ()
 handleReactions' st (r:rs) = do
     handleReaction st r
     handleReactions' st rs
