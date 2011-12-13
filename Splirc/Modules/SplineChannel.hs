@@ -2,7 +2,7 @@ module Splirc.Modules.SplineChannel where
 
 import Splirc.Types
 
-channelname = "#spline"
+channelname = "#splirc"
 
 setup :: IO [EventHandler]
 setup = return [OnConnect connectHandler, OnJoin channelname sayHelloToSpline]
