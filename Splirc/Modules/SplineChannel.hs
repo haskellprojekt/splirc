@@ -5,8 +5,12 @@ import Splirc.Types
 channelname = "#splirc"
 
 setup :: IO [EventHandler]
-setup = return [OnConnect connectHandler, OnJoin channelname sayHelloToSpline]
+setup = return [OnConnect connectHandler, OnJoin channelname sayHelloToSpline, OnEveryJoin sayHello]
 
 connectHandler _ = return [SendCommand $ Join channelname]
+
 sayHelloToSpline (IsJoin _) = return
     [SendMessage channelname "hello world^Wspline!"]
+
+sayHello (IsJoin ch) = return [SendMessage ch ("hallo "++ ch)]
+
