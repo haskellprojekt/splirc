@@ -30,7 +30,7 @@ main = do
 
     let st = State { st_conn=h, st_handlers=handlers }
 
-    event st IsConnect
+    event st ConnectEvent
     
     -- just print everything for now
     t <- hGetContents h
@@ -64,11 +64,11 @@ event st e = handleReactions st reactions
 -- EventHandler is called.
 -- a little ugly, too, maybe this can be done better, with some monad foo or so
 applyEvent :: Event -> EventHandler -> IO [Reaction]
-applyEvent e@(IsMessage ch1 _ _) (OnMessage ch2 f) = onlyIfMatch ch1 ch2 (f e)
-applyEvent e@(IsMessage _ _ _) (OnEveryMessage f) = f e
-applyEvent e@(IsConnect) (OnConnect f) = do f e
-applyEvent e@(IsJoin _) (OnEverySelfJoin f) = f e
-applyEvent e@(IsJoin ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
+applyEvent e@(MessageEvent ch1 _ _) (OnMessage ch2 f) = onlyIfMatch ch1 ch2 (f e)
+applyEvent e@(MessageEvent _ _ _) (OnEveryMessage f) = f e
+applyEvent e@(ConnectEvent) (OnConnect f) = do f e
+applyEvent e@(JoinEvent _) (OnEverySelfJoin f) = f e
+applyEvent e@(JoinEvent ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
 -- ...
 applyEvent _ _ = return [] -- Fallback: event does not match this EventHandler
 
@@ -99,7 +99,7 @@ handleCommand :: State -> IRCCommand -> IO ()
 handleCommand st (Pong arg) = connWrite st $ "PONG :" ++ arg
 handleCommand st (Join ch) = do
     connWrite st $ "JOIN :" ++ ch
-    event st (IsJoin ch) -- just to make it work ;) in real we should wait
+    event st (JoinEvent ch) -- just to make it work ;) in real we should wait
                          -- for the server to tell us we have joined
 handleCommand st (RawCommand cmd) = connWrite st cmd
 

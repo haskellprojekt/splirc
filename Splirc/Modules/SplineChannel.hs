@@ -9,8 +9,8 @@ setup = return [OnConnect connectHandler, OnSelfJoin channelname sayHelloToSplin
 
 connectHandler _ = return [SendCommand $ Join channelname]
 
-sayHelloToSpline (IsJoin _) = return
+sayHelloToSpline (JoinEvent _) = return
     [SendMessage channelname "hello world^Wspline!"]
 
-sayHello (IsJoin ch) = return [SendMessage ch ("hallo "++ ch)]
+sayHello (JoinEvent ch) = return [SendMessage ch ("hallo "++ ch)]
 

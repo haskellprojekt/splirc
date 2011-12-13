@@ -20,13 +20,13 @@ type EventHandlerFunction = Event -> IO [Reaction] -- just a shortcut
 
 -- These are the events that can happen. They are given to the event handler
 -- so that it can find out what happened.
-data Event = IsMessage Channel User Message
-           | IsPrivMessage User Message
-           | IsResponse String
-           | IsConnect
-           | IsJoin Channel
-           | IsSelfJoin Channel
-           | IsCommand CommandName [String]
+data Event = MessageEvent Channel User Message
+           | PrivMessageEvent User Message
+           | ResponseEvent String
+           | ConnectEvent
+           | JoinEvent Channel
+           | SelfJoinEvent Channel
+           | CommandEvent CommandName [String]
 
 type Channel = String
 type User = String
