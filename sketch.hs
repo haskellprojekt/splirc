@@ -7,6 +7,7 @@ import System.IO
 import System.Environment
 
 import Splirc.Types
+import Splirc.Parser
 import qualified Splirc.Modules.Pong
 import qualified Splirc.Modules.Echo
 import qualified Splirc.Modules.SplineChannel
@@ -31,10 +32,20 @@ main = do
     let st = State { st_conn=h, st_handlers=handlers }
 
     event st ConnectEvent
-    
-    -- just print everything for now
-    t <- hGetContents h
-    putStr t
+
+    readLines h
+    putStr "stopping Bot"
+
+--readLines:: Handle -> IO String
+--readLines h = (liftM concat . sequence) [(readIO "line: "),(hGetLine h),(readLines h)]
+readLines:: Handle -> IO ()
+readLines h = do
+  t <- hGetLine h
+  putStrLn t
+  parseString t
+  readLines h
+
+
 
 -- run the setup methods of all modules, return all event handlers.
 runSetup :: IO [EventHandler] -- IO because setup methods may be IO.
@@ -77,7 +88,7 @@ onlyIfMatch a b result = if a == b then result else return []
 
 
 -- REACTION HANDLING STUFF
-
+--http://www.youtube.com/watch?v=W8hl8yxj4Y0&feature=related
 handleReactions :: State -> IO [Reaction] -> IO ()
 handleReactions st reactions = do
     rs <- reactions
