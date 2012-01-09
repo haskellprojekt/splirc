@@ -18,6 +18,7 @@ setups = [Splirc.Modules.Pong.setup, Splirc.Modules.Echo.setup, Splirc.Modules.S
 port = PortNumber 6667
 
 main = do
+    hSetBuffering stdout NoBuffering
     handlers <- runSetup
     putStrLn $ "Have " ++ show (length handlers) ++ " handlers"
 
@@ -29,23 +30,22 @@ main = do
     hPutStrLn h $ "user splirc _ _ :Splirc Haskell Bot"
     hPutStrLn h $ "nick " ++ nick
 
-    let st = State { st_conn=h, st_handlers=handlers }
+    let st = State { st_nick=nick, st_conn=h, st_handlers=handlers }
 
     event st ConnectEvent
-
-    readLines h
+	
+    readLines h st
     putStr "stopping Bot"
 
---readLines:: Handle -> IO String
---readLines h = (liftM concat . sequence) [(readIO "line: "),(hGetLine h),(readLines h)]
-readLines:: Handle -> IO ()
-readLines h = do
+
+readLines:: Handle -> State -> IO ()
+readLines h st = do
   t <- hGetLine h
-  putStrLn t
-  parseString t
-  readLines h
-
-
+  print ("fromServer: "++t)
+  let fromServer = parseString t
+  putStrLn ("As command: "++ (show fromServer))
+  handleFromServer st fromServer
+  readLines h st
 
 -- run the setup methods of all modules, return all event handlers.
 runSetup :: IO [EventHandler] -- IO because setup methods may be IO.
@@ -55,6 +55,17 @@ runSetup = (liftM concat . sequence) setups
 
 -- EVENT HANDLING STUFF
 
+handleFromServer :: State -> FromServer -> IO ()
+handleFromServer state (NickCommand nick "JOIN" [channelname]) = if nick == st_nick state
+    then event state (SelfJoinEvent channelname)
+    else event state (JoinEvent channelname) -- to do change the Constructor to also include a parameter for the nick of the user who has joined!
+handleFromServer state (PureCommand "PING" [param]) = event state (PingEvent param)
+handleFromServer state (PureCommand msg params) = putStr ("unknown PureCommand received :\""++(show (PureCommand msg params))++"\"")
+handleFromServer state cmd = putStrLn ("unknown command received: " ++ show cmd)
+{-handleFromServer state (NickCommand nick "PART" [channelname]) = if nick == st_nick state
+    then event $ SelfPartEvent nick channelname
+    else event $ PartEvent nick channelname-}
+
 -- Called everytime something happens.
 -- Try to match the event to every registered event handler using
 -- `applyEvent`, concat the reactions, and pass it to handleReactions.
@@ -63,7 +74,7 @@ runSetup = (liftM concat . sequence) setups
 -- - e is the event that happened
 event :: State -> Event -> IO ()
 --event handlers e = concat $ map (applyEvent e) handlers
-event st e = handleReactions st reactions
+event st e = do putStrLn "event" ; handleReactions st reactions
     where
         reactions = (liftM concat . sequence) $ map (applyEvent e) handlers
         handlers = st_handlers st
@@ -77,18 +88,19 @@ event st e = handleReactions st reactions
 applyEvent :: Event -> EventHandler -> IO [Reaction]
 applyEvent e@(MessageEvent ch1 _ _) (OnMessage ch2 f) = onlyIfMatch ch1 ch2 (f e)
 applyEvent e@(MessageEvent _ _ _) (OnEveryMessage f) = f e
-applyEvent e@(ConnectEvent) (OnConnect f) = do f e
+applyEvent e@(ConnectEvent) (OnConnect f) = f e
 applyEvent e@(JoinEvent _) (OnEverySelfJoin f) = f e
 applyEvent e@(JoinEvent ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
+applyEvent e@(PingEvent msg) (OnPing f) = (f e)
 -- ...
-applyEvent _ _ = return [] -- Fallback: event does not match this EventHandler
+applyEvent msg onBla = do putStrLn ("applyEvent not matching: "++(show msg)) ; return [] -- Fallback: event does not match this EventHandler
 
 -- helper for stuff like OnMessage and OnSelfJoin
 onlyIfMatch a b result = if a == b then result else return []
 
 
 -- REACTION HANDLING STUFF
---http://www.youtube.com/watch?v=W8hl8yxj4Y0&feature=related
+
 handleReactions :: State -> IO [Reaction] -> IO ()
 handleReactions st reactions = do
     rs <- reactions

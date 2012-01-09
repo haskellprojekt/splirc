@@ -4,10 +4,8 @@ import Splirc.Types
 
 
 setup :: IO [EventHandler]
-setup = return [OnEveryResponse pongHandler]
+setup = do putStrLn "pongSetup" ; return [OnPing pongHandler]
 
-pongHandler (ResponseEvent resp) =
-    if (map toUpper $ take 5 resp) == "PING " then
-        return [SendCommand $ Pong $ drop 5 resp]
-    else
-        return []
+pongHandler (PingEvent resp) = do
+  putStrLn "pongHandler called!!"
+  return [SendCommand $ Pong $ resp]

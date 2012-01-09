@@ -1,0 +1,7 @@
+splirc:
+
+	compile:
+		cd <projectfolder>
+		ghc --make sketch.hs
+	test:
+		./sketch <server> <name for the bot>

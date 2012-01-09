@@ -24,7 +24,7 @@ startsWith :: String -> String -> Bool
 startsWith "" "" = True
 startsWith token "" = False
 startsWith "" str = True
-startsWith (token:token_rest) (str:str_rest) = (token==str) -- && (startsWith token_rest str_rest)
+startsWith (token:token_rest) (str:str_rest) = (token==str) && (startsWith token_rest str_rest)
 
 --unpack
 removeLeadingRec token str = if (startsWith token str) then (removeLeadingRec token (removeLeading token str)) else str

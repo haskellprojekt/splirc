@@ -3,21 +3,53 @@
 
 module Splirc.Parser where
 
-{- parseString :: String
-parseString str = functionFromStrings $ splitString str
+import Splirc.Types
+import Splirc.Parser.TextFunctions
 
-splitString :: String -> [String]
-splitString []=[]
-splitString (x:xs)=if x==' ' then "":(splitString xs) else x:(take 1 restlist):(drop 1 restlist)
+{--parseStringIO :: IO String -> IO FromServer
+parseStringIO str= (liftM parseString) str--}
+
+parseString :: String -> FromServer
+--ServerCommands and Nickcommands begin with ":"
+parseString (':':str) =
+  if (is_server_command serverOrNick)
+  then ServerCommand serverOrNick command (parseParams params)
+  else NickCommand serverOrNick command (parseParams params)
+    where
+      serverOrNick = extractNext str
+      command = extractNext (extractRest str)
+      params = (extractRest (extractRest str))
+      is_server_command str = contains "." str
+--The command must be a Purecommand:
+parseString str = PureCommand command (parseParams params)
   where
-    restlist=splitString xs
+    command = extractNext str
+    params = extractRest str
+
+parseParams "" = --error "unterminated parameter List!!!"
+  [] -- don' throw an error, to prevent the Bot from crashing. Obviously parameter lists often are not terminated correctly... :-P
+parseParams (':':str) = [str]
+parseParams str = (extractNext str):(parseParams (extractRest str))
+
+--split a string at any " ", eg.:
+
+--    (splitString dsntMatter "bli bla blubb") == ["bli","bla","blubb"]
+
+-- ignore leading/trailing " "s
+--             |
+--             V
+{-splitString :: Bool -> String -> [String]
+splitString True (' ':xs) = splitString True rest where
+  rest=removeTrailing xs
+splitString True str = splitString False (removeTrailing str)
+
+splitString False ""=[""]
+splitString False (x:xs)=if x==' ' then "":(restlist) else (x:(restlist!!0)):(drop 1 restlist)
+  where
+    restlist=splitString False xs-}
 
 --
---functionFromStrings :: [String]
---functionFromStrings []=
---functionFromStrings (x:xs)
-
-type Src= String
+{-type Src= String
 type Dest= String
 type Msg= String
 type Params = [String]
@@ -28,21 +60,11 @@ functionFromTokens :: Src -> Dest -> Msg -> Params -}
 
 
 -- marian:
-data Command = ServerCommand ServerName Command Params | NickCommand Nick Command Params | PureCommand Command Params
+data FromServer = ServerCommand ServerName Command Params | NickCommand NickName Command Params | PureCommand Command Params | Unknown [String] deriving(Show)
 type ServerName = String
 type NickName = String
 type Command = String
 type Params = [String]
-
-
-
-handleCommand :: Command -> IO [Reaction]
-handleCommand (NickCommand nick "JOIN" [channelname]) = if nick == st_nick st
-    then event $ SelfJoinEvent nick channelname
-    else event $ JoinEvent nick channelname
-handleCommand (NickCommand nick "PART" [channelname]) = if nick == st_nick st
-    then event $ SelfPartEvent nick channelname
-    else event $ PartEvent nick channelname
 
 
 -- message = :servername befehl parameter  ServerCommand servername befehl parameter

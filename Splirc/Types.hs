@@ -10,6 +10,7 @@ data EventHandler = OnMessage Channel EventHandlerFunction
                   | OnEveryMessage EventHandlerFunction
                   | OnPrivMessage EventHandlerFunction
                   | OnEveryResponse EventHandlerFunction
+                  | OnPing EventHandlerFunction
                   | OnConnect EventHandlerFunction
                   | OnEverySelfJoin EventHandlerFunction -- we joined
                   | OnSelfJoin Channel EventHandlerFunction -- "
@@ -23,10 +24,12 @@ type EventHandlerFunction = Event -> IO [Reaction] -- just a shortcut
 data Event = MessageEvent Channel User Message
            | PrivMessageEvent User Message
            | ResponseEvent String
+           | PingEvent String
            | ConnectEvent
            | JoinEvent Channel
            | SelfJoinEvent Channel
            | CommandEvent CommandName [String]
+  deriving(Show)
 
 type Channel = String
 type User = String
@@ -42,6 +45,7 @@ data IRCCommand = RawCommand String -- an IRC command sent to the server
 type Connection = GHC.IO.Handle.Types.Handle
 -- A state object which holds objects we may need, so we can pass them around
 data State = State {
+    st_nick :: String,
     st_conn :: Connection,
     st_handlers :: [EventHandler]
 }
