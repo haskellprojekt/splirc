@@ -25,8 +25,9 @@ handleFromServer state (NickCommand nick "JOIN" [channelname]) = if nick == st_n
     then event state (SelfJoinEvent channelname)
     else event state (JoinEvent channelname) -- to do change the Constructor to also include a parameter for the nick of the user who has joined!
 handleFromServer state (PureCommand "PING" [param]) = event state (PingEvent param)
-handleFromServer state cmd@(PureCommand msg params) = putStr $ "unknown PureCommand received :" ++ show cmd
-handleFromServer state cmd = putStrLn ("unknown command received: " ++ show cmd)
+-- fallbacks
+handleFromServer state cmd@(PureCommand msg params) = putStrLn $ "unknown PureCommand received :" ++ show cmd
+handleFromServer state cmd = putStrLn $ "unknown command received: " ++ show cmd
 {-handleFromServer state (NickCommand nick "PART" [channelname]) = if nick == st_nick state
     then event $ SelfPartEvent nick channelname
     else event $ PartEvent nick channelname-}
@@ -41,7 +42,7 @@ handleFromServer state cmd = putStrLn ("unknown command received: " ++ show cmd)
 -- - e is the event that happened
 event :: State -> Event -> IO ()
 --event handlers e = concat $ map (applyEvent e) handlers
-event st e = do putStrLn "event" ; handleReactions st reactions
+event st e = handleReactions st reactions
     where
         reactions = (liftM concat . sequence) $ map (applyEvent e) handlers
         handlers = st_handlers st
@@ -59,7 +60,7 @@ applyEvent e@(JoinEvent _) (OnEverySelfJoin f) = f e
 applyEvent e@(JoinEvent ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
 applyEvent e@(PingEvent msg) (OnPing f) = (f e)
 -- ...
-applyEvent msg onBla = do putStrLn ("applyEvent not matching: "++(show msg)) ; return [] -- Fallback: event does not match this EventHandler
+applyEvent msg onBla = return [] -- Fallback: event does not match this EventHandler
 
 -- helper for stuff like OnMessage and OnSelfJoin
 onlyIfMatch a b result = if a == b then result else return []
@@ -94,5 +95,7 @@ handleCommand st (RawCommand cmd) = connWrite st cmd
 
 -- helper
 connWrite :: State -> String -> IO ()
-connWrite st msg = hPutStrLn h msg
+connWrite st msg = do
+    putStrLn $ "> " ++ msg
+    hPutStrLn h msg
     where h = st_conn st

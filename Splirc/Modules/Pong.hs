@@ -4,8 +4,6 @@ import Splirc.Types
 
 
 setup :: IO [EventHandler]
-setup = do putStrLn "pongSetup" ; return [OnPing pongHandler]
+setup = return [OnPing pongHandler]
 
-pongHandler (PingEvent resp) = do
-  putStrLn "pongHandler called!!"
-  return [SendCommand $ Pong $ resp]
+pongHandler (PingEvent resp) = return [SendCommand $ Pong $ resp]

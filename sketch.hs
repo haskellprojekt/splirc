@@ -29,7 +29,7 @@ main = do
     event st ConnectEvent
 	
     readLines h st
-    putStr "stopping Bot"
+    putStrLn $ "stopping Bot"
 
 
 readLines:: Handle -> State -> IO ()
@@ -37,7 +37,7 @@ readLines h st = do
   t <- hGetLine h
   print ("fromServer: "++t)
   let fromServer = parseString t
-  putStrLn ("As command: "++ (show fromServer))
+  putStrLn $ "< " ++ show fromServer
   handleFromServer st fromServer
   readLines h st
 
@@ -45,8 +45,3 @@ readLines h st = do
 runSetup :: IO [EventHandler] -- IO because setup methods may be IO.
 runSetup = (liftM concat . sequence) setups
 -- this is basically concat, but with [IO [a]] -> IO [a] instead of [[a]]->[a]
-
-
--- EVENT HANDLING STUFF
-
-
