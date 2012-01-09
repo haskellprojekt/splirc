@@ -87,10 +87,7 @@ handleReaction st (Debug msg) = hPutStrLn stderr msg
 
 handleCommand :: State -> IRCCommand -> IO ()
 handleCommand st (Pong arg) = connWrite st $ "PONG :" ++ arg
-handleCommand st (Join ch) = do
-    connWrite st $ "JOIN :" ++ ch
-    event st (JoinEvent ch) -- just to make it work ;) in real we should wait
-                         -- for the server to tell us we have joined
+handleCommand st (Join ch) = connWrite st $ "JOIN :" ++ ch
 handleCommand st (RawCommand cmd) = connWrite st cmd
 
 -- helper
