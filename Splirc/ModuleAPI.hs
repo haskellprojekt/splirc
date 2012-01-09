@@ -59,7 +59,7 @@ applyEvent e@(JoinEvent _) (OnEverySelfJoin f) = f e
 applyEvent e@(JoinEvent ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
 applyEvent e@(PingEvent msg) (OnPing f) = (f e)
 -- ...
-applyEvent msg onBla = return [] -- Fallback: event does not match this EventHandler
+applyEvent msg onBla = do putStrLn ("applyEvent not matching: "++(show msg)) ; return [] -- Fallback: event does not match this EventHandler
 
 -- helper for stuff like OnMessage and OnSelfJoin
 onlyIfMatch a b result = if a == b then result else return []
