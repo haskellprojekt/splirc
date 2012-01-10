@@ -14,12 +14,13 @@ parseString :: String -> FromServer
 parseString (':':str) =
   if (is_server_command serverOrNick)
   then ServerCommand serverOrNick command (parseParams params)
-  else NickCommand serverOrNick command (parseParams params)
+  else NickCommand (onlyNick serverOrNick) command (parseParams params)
     where
       serverOrNick = extractNext str
       command = extractNext (extractRest str)
       params = (extractRest (extractRest str))
       is_server_command str = contains "." str && not (contains "@" str || contains "!" str)
+      onlyNick = takeWhile (`notElem` "!@")
 --The command must be a Purecommand:
 parseString str = PureCommand command (parseParams params)
   where
