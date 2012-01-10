@@ -1,7 +1,7 @@
 module Splirc.ModuleAPI where
 
 import Control.Monad
-import Data.String.Utils
+import Data.List
 import Network
 import System.IO
 import System.Environment
@@ -118,5 +118,5 @@ connWrite st msg = do
 
 --      handleCommandEvent (CommandEvent channel nick) nick msg
 handleCommandEvent :: State -> (CommandName -> CommandArgs -> Event) -> Message -> IO ()
-handleCommandEvent state base msg = when (startswith commandPrefix msg) ((putStrLn $ "command! " ++ cmd) >> (event state $ base cmd args))
+handleCommandEvent state base msg = when (commandPrefix `isPrefixOf` msg) ((putStrLn $ "command! " ++ cmd) >> (event state $ base cmd args))
     where ((_:cmd):args) = words msg
