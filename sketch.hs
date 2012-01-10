@@ -35,9 +35,8 @@ main = do
 readLines:: Handle -> State -> IO ()
 readLines h st = do
   t <- hGetLine h
-  print ("fromServer: "++t)
+  putStrLn $ "< " ++ t
   let fromServer = parseString t
-  putStrLn $ "< " ++ show fromServer
   handleFromServer st fromServer
   readLines h st
 

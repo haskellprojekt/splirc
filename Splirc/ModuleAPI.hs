@@ -1,12 +1,15 @@
 module Splirc.ModuleAPI where
 
 import Control.Monad
+import Data.String.Utils
 import Network
 import System.IO
 import System.Environment
 
 import Splirc.Types
 import Splirc.Parser
+
+
 
 -- IMPORT MODULES, RUN SETUP METHODS
 
@@ -18,6 +21,10 @@ setups = [Splirc.Modules.Pong.setup, Splirc.Modules.Echo.setup, Splirc.Modules.S
 -- modules and search setup methods, later: only the enabled ones)
 
 
+
+commandPrefix = "!" -- TODO: take that from the config
+
+
 -- HANDLE SERVER RESPONSES, THROW EVENTS
 
 handleFromServer :: State -> FromServer -> IO ()
@@ -25,6 +32,16 @@ handleFromServer state (NickCommand nick "JOIN" [channelname]) = if nick == st_n
     then event state (SelfJoinEvent channelname)
     else event state (JoinEvent channelname) -- to do change the Constructor to also include a parameter for the nick of the user who has joined!
 handleFromServer state (PureCommand "PING" [param]) = event state (PingEvent param)
+handleFromServer state (NickCommand nick "PRIVMSG" [channel@('#':_), msg]) = do
+    event state (MessageEvent channel nick msg)
+    handleCommandEvent state (CommandEvent channel nick) msg
+handleFromServer state (NickCommand nick "PRIVMSG" [receiver, msg]) = if receiver == st_nick state
+    then do
+        event state (PrivMessageEvent nick msg)
+        handleCommandEvent state (PrivCommandEvent nick) msg
+    else putStrLn $ "Received Private Message to someone else (namely " ++ receiver ++ ")"
+
+
 -- fallbacks
 handleFromServer state cmd@(PureCommand msg params) = putStrLn $ "unknown PureCommand received :" ++ show cmd
 handleFromServer state cmd = putStrLn $ "unknown command received: " ++ show cmd
@@ -59,6 +76,8 @@ applyEvent e@(ConnectEvent) (OnConnect f) = f e
 applyEvent e@(JoinEvent _) (OnEverySelfJoin f) = f e
 applyEvent e@(JoinEvent ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
 applyEvent e@(PingEvent msg) (OnPing f) = (f e)
+applyEvent e@(CommandEvent ch user cmd1 args) (OnCommand cmd2 f) = onlyIfMatch cmd1 cmd2 (f e)
+applyEvent e@(PrivCommandEvent user cmd1 args) (OnPrivCommand cmd2 f) = onlyIfMatch cmd1 cmd2 (f e)
 -- ...
 applyEvent msg onBla = return [] -- Fallback: event does not match this EventHandler
 
@@ -96,3 +115,8 @@ connWrite st msg = do
     putStrLn $ "> " ++ msg
     hPutStrLn h msg
     where h = st_conn st
+
+--      handleCommandEvent (CommandEvent channel nick) nick msg
+handleCommandEvent :: State -> (CommandName -> CommandArgs -> Event) -> Message -> IO ()
+handleCommandEvent state base msg = when (startswith commandPrefix msg) ((putStrLn $ "command! " ++ cmd) >> (event state $ base cmd args))
+    where ((_:cmd):args) = words msg

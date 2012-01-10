@@ -19,7 +19,7 @@ parseString (':':str) =
       serverOrNick = extractNext str
       command = extractNext (extractRest str)
       params = (extractRest (extractRest str))
-      is_server_command str = contains "." str
+      is_server_command str = contains "." str && not (contains "@" str || contains "!" str)
 --The command must be a Purecommand:
 parseString str = PureCommand command (parseParams params)
   where
@@ -59,12 +59,6 @@ functionFromTokens :: Src -> Dest -> Msg -> Params -}
 
 
 
--- marian:
-data FromServer = ServerCommand ServerName Command Params | NickCommand NickName Command Params | PureCommand Command Params | Unknown [String] deriving(Show)
-type ServerName = String
-type NickName = String
-type Command = String
-type Params = [String]
 
 
 -- message = :servername befehl parameter  ServerCommand servername befehl parameter

@@ -15,26 +15,29 @@ data EventHandler = OnMessage Channel EventHandlerFunction
                   | OnEverySelfJoin EventHandlerFunction -- we joined
                   | OnSelfJoin Channel EventHandlerFunction -- "
                   | OnJoin Channel EventHandlerFunction -- a user joined
-                  | OnEveryJoin Channel EventHandlerFunction -- "
+                  | OnEveryJoin EventHandlerFunction -- "
                   | OnCommand CommandName EventHandlerFunction
+                  | OnPrivCommand CommandName EventHandlerFunction
 type EventHandlerFunction = Event -> IO [Reaction] -- just a shortcut
 
 -- These are the events that can happen. They are given to the event handler
 -- so that it can find out what happened.
 data Event = MessageEvent Channel User Message
            | PrivMessageEvent User Message
-           | ResponseEvent String
+           | ResponseEvent FromServer
            | PingEvent String
            | ConnectEvent
            | JoinEvent Channel
            | SelfJoinEvent Channel
-           | CommandEvent CommandName [String]
+           | CommandEvent Channel User CommandName [String]
+           | PrivCommandEvent User CommandName [String]
   deriving(Show)
 
 type Channel = String
 type User = String
 type Message = String
 type CommandName = String -- this is a user command (!dosomething)
+type CommandArgs = [String]
 data Reaction = SendMessage Channel Message
               | SendCommand IRCCommand
               | Debug String
@@ -49,3 +52,10 @@ data State = State {
     st_conn :: Connection,
     st_handlers :: [EventHandler]
 }
+
+
+data FromServer = ServerCommand ServerName Command Params | NickCommand NickName Command Params | PureCommand Command Params | Unknown [String] deriving(Show)
+type ServerName = String
+type NickName = String
+type Command = String
+type Params = [String]
