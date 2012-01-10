@@ -73,8 +73,8 @@ applyEvent :: Event -> EventHandler -> IO [Reaction]
 applyEvent e@(MessageEvent ch1 _ _) (OnMessage ch2 f) = onlyIfMatch ch1 ch2 (f e)
 applyEvent e@(MessageEvent _ _ _) (OnEveryMessage f) = f e
 applyEvent e@(ConnectEvent) (OnConnect f) = f e
-applyEvent e@(JoinEvent _) (OnEverySelfJoin f) = f e
-applyEvent e@(JoinEvent ch1) (OnSelfJoin ch2 f) = onlyIfMatch ch1 ch2 (f e)
+applyEvent e@(SelfJoinEvent _) (OnEverySelfJoin f) = f e
+applyEvent e@(SelfJoinEvent ch1) (OnSelfJoin ch2 f) = putStrLn ("got selfjoin for " ++ ch1) >> onlyIfMatch ch1 ch2 (f e)
 applyEvent e@(PingEvent msg) (OnPing f) = (f e)
 applyEvent e@(CommandEvent ch user cmd1 args) (OnCommand cmd2 f) = onlyIfMatch cmd1 cmd2 (f e)
 applyEvent e@(PrivCommandEvent user cmd1 args) (OnPrivCommand cmd2 f) = onlyIfMatch cmd1 cmd2 (f e)

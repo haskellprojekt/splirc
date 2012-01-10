@@ -13,14 +13,17 @@ port = PortNumber 6667
 
 main = do
     hSetBuffering stdout NoBuffering
+
     handlers <- runSetup
     putStrLn $ "Have " ++ show (length handlers) ++ " handlers"
 
     putStrLn $ "Connecting ..."
     -- we don't hardcode that to ease testing
     host:nick:args <- getArgs
+
     h <- connectTo host port
     hSetBuffering h NoBuffering
+    hSetNewlineMode h universalNewlineMode
     hPutStrLn h $ "user splirc _ _ :Splirc Haskell Bot"
     hPutStrLn h $ "nick " ++ nick
 
