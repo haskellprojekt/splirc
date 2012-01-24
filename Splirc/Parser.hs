@@ -9,9 +9,10 @@ import Splirc.Parser.TextFunctions
 {--parseStringIO :: IO String -> IO FromServer
 parseStringIO str= (liftM parseString) str--}
 
+-- parses a message from a IRC-Server, returning it using the internal representation
+-- to do: define test case/assertion !
 parseString :: String -> FromServer
---ServerCommands and Nickcommands begin with ":"
-parseString (':':str) =
+parseString (':':str) =						--ServerCommands and Nickcommands begin with ":"
   if (is_server_command serverOrNick)
   then ServerCommand serverOrNick command (parseParams params)
   else NickCommand (onlyNick serverOrNick) command (parseParams params)
@@ -21,8 +22,7 @@ parseString (':':str) =
       params = (extractRest (extractRest str))
       is_server_command str = contains "." str && not (contains "@" str || contains "!" str)
       onlyNick = takeWhile (`notElem` "!@")
---The command must be a Purecommand:
-parseString str = PureCommand command (parseParams params)
+parseString str = PureCommand command (parseParams params)	--The command must be a Purecommand:
   where
     command = extractNext str
     params = extractRest str

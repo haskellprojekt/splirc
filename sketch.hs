@@ -1,4 +1,4 @@
--- all together a little ugly, we should clean that up, split it in modules etc
+-- splirc main file
 
 
 import Control.Monad
@@ -11,6 +11,10 @@ import Splirc.Parser
 import Splirc.ModuleAPI
 port = PortNumber 6667
 
+
+-- main function:
+-- connects to the IRC channel <program param 1> using the nickname <program param 2>
+-- ! to do: what happens if splirc command "user" fails?
 main = do
     hSetBuffering stdout NoBuffering
 
@@ -34,16 +38,18 @@ main = do
     readLines h st
     putStrLn $ "stopping Bot"
 
-
+-- main loop:
+-- recursively read line by line. For every Line: parse it -> handle it
 readLines:: Handle -> State -> IO ()
 readLines h st = do
-  t <- hGetLine h
-  putStrLn $ "< " ++ t
-  let fromServer = parseString t
-  handleFromServer st fromServer
+  t <- hGetLine h 			-- get next line
+  putStrLn $ "< " ++ t				--(output line to console window)
+  let fromServer = parseString t 	-- parse it
+  handleFromServer st fromServer	-- handle it
   readLines h st
 
 -- run the setup methods of all modules, return all event handlers.
+-- to do: load modules dynamically
 runSetup :: IO [EventHandler] -- IO because setup methods may be IO.
 runSetup = (liftM concat . sequence) setups
 -- this is basically concat, but with [IO [a]] -> IO [a] instead of [[a]]->[a]

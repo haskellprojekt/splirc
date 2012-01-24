@@ -1,16 +1,37 @@
 module Splirc.Parser.TextFunctions where
 
+
+{- extractNext and extractRest can be used to sequencially extract words from a string -}
+
+
+-- returns everything until next ' '
+-- assertions:
+{-
+	extractNext (" "++str) == ""
+	forall (not (contains " " word)) extractNext (word++" "++str) == word
+-} 
 extractNext :: String -> String
 extractNext "" = ""
 extractNext (' ':xs) = ""
 extractNext (x:xs) = x:(extractNext xs)
 
+-- returns everything after next ' '
+-- assertions:
+{-
+	extractRest (" "++str) == str
+	forall (not (contains " " word)) extractRest (word++" "++str) == str
+-}
 extractRest :: String -> String
 extractRest "" = ""
 extractRest (' ':xs) = xs
 extractRest (x:xs) = (extractRest xs)
 
 -- does the string contain <token> (at any position)?
+-- assertions:
+{-
+	--(contains token (token++str) == True)
+	contains token (begin++token++end) == True
+-}
 contains :: String -> String -> Bool
 contains "" "" = True
 contains "" str = True
@@ -20,6 +41,12 @@ contains token@(token_fst:token_rest) (x:xs) =
   then True
   else contains token xs
 
+-- does the string start with a specific token?
+-- assertions:
+{-
+	startsWith token (token++str) == True
+	... to do
+-}
 startsWith :: String -> String -> Bool
 startsWith "" "" = True
 startsWith token "" = False
